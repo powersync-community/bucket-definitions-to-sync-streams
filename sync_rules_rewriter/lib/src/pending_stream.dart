@@ -10,11 +10,49 @@ final class PendingSyncStream {
   final String name;
   final List<DiagnosticMessage> messages;
   final List<String> parameterQueries = [];
+  final Map<String, List<Expression>> trivialParameters = {};
   int priority;
 
   final List<String> data = [];
 
   PendingSyncStream(this.name, this.messages, this.priority);
+
+  /// Whether the node is a trivial parameter query (without a `FROM` clause or
+  /// `WHERE` conditions).
+  ///
+  /// For those queries, we inline the definition into use-sites. This results
+  /// in more idiomatic outputs in many cases. For instance, a parameter query
+  /// `SELECT request.user_id() as user_id` would result in `auth.user_id()`
+  /// being inlined instead of us adding a CTE for this. This makes it clearer
+  /// that parameters and data no longer need to be separate queries.
+  ///
+  /// Technically, we can always inline all parameter queries by joining them
+  /// and adopting their `WHERE` clause. But the general case requires
+  /// introducing table aliases and might make outputs less readable.
+  bool _tryInlining(AstNode node) {
+    if (node case SelectStatement(
+      columns: final columns,
+      from: null,
+      where: null,
+    )) {
+      final instantiation = <String, Expression>{};
+
+      for (final column in columns) {
+        if (column is ExpressionResultColumn) {
+          var name = (column.as ?? column.expression.resultColumnName)
+              .toLowerCase();
+          instantiation[name] = column.expression;
+        }
+      }
+
+      instantiation.forEach(
+        (k, v) => trivialParameters.putIfAbsent(k, () => []).add(v),
+      );
+      return true;
+    }
+
+    return false;
+  }
 
   void addParameter(FileSpan span) {
     final root = _ToStreamTranslator(
@@ -22,6 +60,10 @@ final class PendingSyncStream {
       isDataQuery: false,
     ).transform(_parse(span), null);
     if (root != null) {
+      if (_tryInlining(root)) {
+        return;
+      }
+
       parameterQueries.add(FixedNodeToSql.toSql(root));
     }
   }
@@ -48,10 +90,11 @@ final class PendingSyncStream {
 final class _ToStreamTranslator extends Transformer<void> {
   final PendingSyncStream stream;
   String? defaultTableName;
+  bool isDataQuery;
 
   final int parameterQueryCount;
 
-  _ToStreamTranslator(this.stream, {required bool isDataQuery})
+  _ToStreamTranslator(this.stream, {required this.isDataQuery})
     : parameterQueryCount = isDataQuery ? stream.parameterQueries.length : 0;
 
   @override
@@ -156,14 +199,21 @@ final class _ToStreamTranslator extends Transformer<void> {
     return super.visitBinaryExpression(e, arg);
   }
 
-  Iterable<Expression>? _expandBucketReference(Expression e) {
-    if (e case Reference(:final columnName, entityName: 'bucket')) {
-      return Iterable.generate(parameterQueryCount, (i) {
-        return Reference(
-          columnName: columnName,
-          entityName: parameterCteName(parameterQueryCount, i),
-        );
-      });
+  List<Expression>? _expandBucketReference(Expression e) {
+    if (isDataQuery) {
+      if (e case Reference(:final columnName, entityName: 'bucket')) {
+        return [
+          if (stream.trivialParameters[e.columnName.toLowerCase()]
+              case final instantiation?)
+            ...instantiation,
+
+          for (var i = 0; i < parameterQueryCount; i++)
+            Reference(
+              columnName: columnName,
+              entityName: parameterCteName(parameterQueryCount, i),
+            ),
+        ];
+      }
     }
 
     return null;
@@ -191,3 +241,12 @@ final _engine = SqlEngine(
     supportSchemaInFunctionNames: true,
   ),
 );
+
+extension on Expression {
+  String get resultColumnName {
+    return switch (this) {
+      Reference(:final columnName) => columnName,
+      _ => span!.text,
+    };
+  }
+}

@@ -17,9 +17,7 @@ config:
 streams:
   user_lists:
     auto_subscribe: true
-    with:
-      bucket: SELECT auth.user_id() AS user_id
-    query: "SELECT lists.* FROM lists,bucket WHERE lists.owner_id = bucket.user_id"
+    query: SELECT * FROM lists WHERE lists.owner_id = auth.user_id()
 ''',
     );
   });
@@ -109,9 +107,7 @@ streams:
   a:
     priority: 1
     auto_subscribe: true
-    with:
-      bucket: SELECT auth.user_id() AS user
-    query: "SELECT a.* FROM a,bucket WHERE a.owner = bucket.user"
+    query: SELECT * FROM a WHERE owner = auth.user_id()
 ''',
     );
   });

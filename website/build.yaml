@@ -9,7 +9,7 @@ targets:
           compilers:
             dart2js:
               args:
-                - O4
+                - -O4
             dart2wasm:
               args:
-                - O3
+                - -O3

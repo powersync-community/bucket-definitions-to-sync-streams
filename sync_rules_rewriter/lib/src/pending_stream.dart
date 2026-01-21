@@ -59,7 +59,7 @@ final class PendingSyncStream {
       this,
       isDataQuery: false,
     ).transform(_parse(span), null);
-    if (root != null) {
+    if (root != null && root is! InvalidStatement) {
       if (_tryInlining(root)) {
         return;
       }
@@ -73,7 +73,7 @@ final class PendingSyncStream {
       this,
       isDataQuery: true,
     ).transform(_parse(span), null);
-    if (root != null) {
+    if (root != null && root is! InvalidStatement) {
       data.add(FixedNodeToSql.toSql(root));
     }
   }

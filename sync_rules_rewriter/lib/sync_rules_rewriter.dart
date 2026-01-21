@@ -157,7 +157,7 @@ String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
                 parameterCteName(stream.parameterQueries.length, i): param,
             }),
           if (stream.data.length > 1)
-            'data': wrapAsYamlNode(stream.data)
+            'queries': wrapAsYamlNode(stream.data)
           else
             'query': stream.data.single,
         },

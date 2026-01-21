@@ -133,7 +133,7 @@ streams:
     with:
       bucket0: SELECT id AS list_id FROM lists WHERE owner_id = auth.user_id()
       bucket1: SELECT list_id FROM user_lists WHERE user_lists.user_id = auth.user_id()
-    data:
+    queries:
       - "SELECT lists.* FROM lists,bucket0,bucket1 WHERE lists.id = bucket0.list_id OR lists.id = bucket1.list_id"
       - "SELECT todos.* FROM todos,bucket0,bucket1 WHERE todos.list_id = bucket0.list_id OR todos.list_id = bucket1.list_id"
 ''',
@@ -160,7 +160,7 @@ streams:
     auto_subscribe: true
     with:
       bucket: SELECT id AS list_id FROM lists WHERE owner_id = auth.user_id()
-    data:
+    queries:
       - "SELECT lists.* FROM lists,bucket WHERE lists.id = bucket.list_id"
       - "SELECT todos.* FROM todos,bucket WHERE todos.list_id = bucket.list_id"
 ''',

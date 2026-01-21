@@ -409,14 +409,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.22.1"
-  jaspr_builder:
-    dependency: transitive
-    description:
-      name: jaspr_builder
-      sha256: "5a152e7bf792d991e6de0e30cee957267ab248ef28c87f4055b293c524ea8492"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.22.1"
   jaspr_riverpod:
     dependency: transitive
     description:
@@ -681,14 +673,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.1"
-  source_gen:
-    dependency: transitive
-    description:
-      name: source_gen
-      sha256: "1d562a3c1f713904ebbed50d2760217fd8a51ca170ac4b05b0db490699dbac17"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.2.0"
   source_map_stack_trace:
     dependency: transitive
     description:

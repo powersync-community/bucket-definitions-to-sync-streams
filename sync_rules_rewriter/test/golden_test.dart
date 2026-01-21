@@ -139,4 +139,31 @@ streams:
 ''',
     );
   });
+
+  test('yaml string syntax', () {
+    expect(
+      syncRulesToSyncStreams('''
+bucket_definitions:
+  owned_lists:
+    parameters: |
+        SELECT id as list_id FROM lists WHERE
+           owner_id = request.user_id()
+    data:
+      - SELECT * FROM lists WHERE lists.id = bucket.list_id
+      - SELECT * FROM todos WHERE todos.list_id = bucket.list_id
+'''),
+      '''
+config:
+  edition: 2
+streams:
+  owned_lists:
+    auto_subscribe: true
+    with:
+      bucket: SELECT id AS list_id FROM lists WHERE owner_id = auth.user_id()
+    data:
+      - "SELECT lists.* FROM lists,bucket WHERE lists.id = bucket.list_id"
+      - "SELECT todos.* FROM todos,bucket WHERE todos.list_id = bucket.list_id"
+''',
+    );
+  });
 }

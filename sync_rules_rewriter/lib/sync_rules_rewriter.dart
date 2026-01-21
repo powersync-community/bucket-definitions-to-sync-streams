@@ -11,8 +11,38 @@ export 'src/error.dart';
 String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
   final editor = YamlEditor(syncRules);
   final file = SourceFile.fromString(syncRules, url: uri);
-  FileSpan translateSpan(SourceSpan span) {
-    return file.span(span.start.offset, span.end.offset);
+
+  FileSpan yamlSpan(YamlNode node) {
+    return file.span(node.span.start.offset, node.span.end.offset);
+  }
+
+  FileSpan yamlContentSpan(YamlScalar node) {
+    final all = yamlSpan(node);
+    FileSpan removePrefix(String prefix) {
+      final index = all.text.indexOf(prefix);
+      return all.subspan(index + 1);
+    }
+
+    FileSpan removeQuotes(String quote) {
+      final index = all.text.indexOf(quote);
+      final end = all.text.lastIndexOf(quote);
+      return all.subspan(index + 1, end);
+    }
+
+    switch (node.style) {
+      case ScalarStyle.FOLDED:
+        return removePrefix('>');
+      case ScalarStyle.LITERAL:
+        return removePrefix('|');
+      case ScalarStyle.SINGLE_QUOTED:
+        return removeQuotes("'");
+      case ScalarStyle.DOUBLE_QUOTED:
+        return removeQuotes('"');
+      case ScalarStyle.PLAIN:
+      case ScalarStyle.ANY:
+      default:
+        return all;
+    }
   }
 
   final diagnostics = <DiagnosticMessage>[];
@@ -56,7 +86,7 @@ String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
     );
 
     if (parameters.value is String) {
-      pending.addParameter(translateSpan(parameters.span));
+      pending.addParameter(yamlContentSpan(parameters as YamlScalar));
     } else if (parameters.value case List(:final length)) {
       for (var i = 0; i < length; i++) {
         final parameter = editor.parseAt([
@@ -67,19 +97,19 @@ String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
         ]);
 
         if (parameter.value is String) {
-          pending.addParameter(translateSpan(parameter.span));
+          pending.addParameter(yamlContentSpan(parameter as YamlScalar));
         }
       }
     }
 
     if (data.value is String) {
-      pending.addData(translateSpan(data.span));
+      pending.addData(yamlContentSpan(data as YamlScalar));
     } else if (data.value case List(:final length)) {
       for (var i = 0; i < length; i++) {
         final data = editor.parseAt(['bucket_definitions', name, 'data', i]);
 
         if (data.value is String) {
-          pending.addData(translateSpan(data.span));
+          pending.addData(yamlContentSpan(data as YamlScalar));
         }
       }
     } else {

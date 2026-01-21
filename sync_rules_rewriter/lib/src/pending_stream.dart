@@ -157,11 +157,11 @@ final class _ToStreamTranslator extends Transformer<void> {
   }
 
   Iterable<Expression>? _expandBucketReference(Expression e) {
-    if (e case Reference(:final columnName, schemaName: 'bucket')) {
+    if (e case Reference(:final columnName, entityName: 'bucket')) {
       return Iterable.generate(parameterQueryCount, (i) {
         return Reference(
           columnName: columnName,
-          schemaName: parameterCteName(parameterQueryCount, i),
+          entityName: parameterCteName(parameterQueryCount, i),
         );
       });
     }

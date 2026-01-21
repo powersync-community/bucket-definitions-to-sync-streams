@@ -5,6 +5,7 @@ environment:
 
 workspace:
  - sync_rules_rewriter
+ - website
 
 dev_dependencies:
   lints: ^6.0.0

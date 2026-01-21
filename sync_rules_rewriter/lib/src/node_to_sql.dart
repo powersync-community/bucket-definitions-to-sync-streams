@@ -1,0 +1,24 @@
+import 'package:sqlparser/sqlparser.dart';
+import 'package:sqlparser/utils/node_to_text.dart';
+
+/// Variant of [NodeSqlBuilder] that properly generates schema names in function
+/// calls.
+final class FixedNodeToSql extends NodeSqlBuilder {
+  @override
+  void visitFunction(FunctionExpression e, void arg) {
+    if (e.schemaName != null) {
+      identifier(e.schemaName!, spaceAfter: false);
+      symbol('.');
+    }
+    identifier(e.name);
+    symbol('(');
+    visit(e.parameters, arg);
+    symbol(')', spaceAfter: true);
+  }
+
+  static String toSql(AstNode node) {
+    final builder = FixedNodeToSql();
+    builder.visit(node, null);
+    return builder.buffer.toString();
+  }
+}

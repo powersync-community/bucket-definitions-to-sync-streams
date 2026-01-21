@@ -1,0 +1,10 @@
+name: _workspace
+
+environment: 
+  sdk: ^3.10.0
+
+workspace:
+ - sync_rules_rewriter
+
+dev_dependencies:
+  lints: ^6.0.0

@@ -36,13 +36,11 @@ final _input = StateProvider(
   (ref) => '''
 # TODO: Paste your sync rules here, they will get translated to sync streams as you type.
 bucket_definitions:
-  user_lists:
-    parameters:
-      - SELECT id as list_id FROM lists WHERE owner_id = request.user_id()
-      - SELECT list_id FROM user_lists WHERE user_lists.user_id = request.user_id()
-    data:
-      - SELECT * FROM lists WHERE lists.id = bucket.list_id
-      - SELECT * FROM todos WHERE todos.list_id = bucket.list_id
+  user_lists: # name for the bucket
+    # Parameter Query, selecting a user_id parameter:
+    parameters: SELECT request.user_id() as user_id 
+    data: # Data Query, selecting data, filtering using the user_id parameter:
+      - SELECT * FROM lists WHERE owner_id = bucket.user_id 
 ''',
 );
 

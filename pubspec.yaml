@@ -1,4 +1,5 @@
 name: _workspace
+publish_to: none
 
 environment: 
   sdk: ^3.10.0

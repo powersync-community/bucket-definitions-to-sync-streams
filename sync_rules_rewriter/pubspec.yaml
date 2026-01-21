@@ -1,5 +1,6 @@
 name: sync_rules_rewriter
 resolution: workspace
+publish_to: none
 
 environment: 
   sdk: ^3.10.0

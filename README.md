@@ -1,7 +1,7 @@
 # Bucket definitions to sync streams
 
 This tool converts sync rules using [bucket definitions](https://docs.powersync.com/sync/rules/organize-data-into-buckets)
-to [sync rules](https://docs.powersync.com/sync/streams/overview).
+to [sync streams](https://docs.powersync.com/sync/streams/overview).
 
 Usage:
 

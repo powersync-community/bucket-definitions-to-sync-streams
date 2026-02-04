@@ -7,5 +7,8 @@ updates:
   - package-ecosystem: "pub"
     versioning-strategy: "increase-if-necessary"
     directory: "/"
+    groups:
+      dart-deps:
+        patterns: ['*']
     schedule:
-      interval: "weekly"
+      interval: "monthly"

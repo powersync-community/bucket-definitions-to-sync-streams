@@ -34,7 +34,7 @@ final class _App extends StatelessComponent {
 
 final _input = StateProvider(
   (ref) => '''
-# TODO: Paste your sync rules here, they will get translated to sync streams as you type.
+# TODO: Paste your Sync Rules here - they will get translated to Sync Streams as you type.
 bucket_definitions:
   user_lists: # name for the bucket
     # Parameter Query, selecting a user_id parameter:

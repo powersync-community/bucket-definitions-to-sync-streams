@@ -1,7 +1,7 @@
-# Bucket definitions to sync streams
+# Sync Rules bucket definitions to Sync Streams
 
-This tool converts sync rules using [bucket definitions](https://docs.powersync.com/sync/rules/organize-data-into-buckets)
-to [sync streams](https://docs.powersync.com/sync/streams/overview).
+This tool converts Sync Rules using [bucket definitions](https://docs.powersync.com/sync/rules/organize-data-into-buckets)
+to [Sync Streams](https://docs.powersync.com/sync/streams/overview).
 
 Usage:
 
@@ -9,7 +9,7 @@ Usage:
 dart run sync_rules_rewriter/bin/rewrite.dart < sync_rules.yaml
 ```
 
-Alternatively, paste your sync rules into [this website](https://powersync-community.github.io/bucket-definitions-to-sync-streams/).
+Alternatively, paste your Sync Rules into [this website](https://powersync-community.github.io/bucket-definitions-to-sync-streams/).
 
 ## Structure
 

@@ -281,6 +281,7 @@ class CompiledApp {
       _288: Function.prototype.call.bind(Number.prototype.toString),
       _289: Function.prototype.call.bind(BigInt.prototype.toString),
       _290: Function.prototype.call.bind(Number.prototype.toString),
+      _295: (x0,x1) => ({result: x0,success: x1}),
 
     };
 

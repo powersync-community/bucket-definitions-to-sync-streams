@@ -15,7 +15,12 @@ const wasmBuffer = fs.readFileSync("web/main.wasm");
 const app = await dart2wasm.compile(wasmBuffer);
 const instantiated = await app.instantiate();
 
-const syncRulesToSyncStream /*: (x: string) => (string) */ =
+const syncRulesToSyncStream /*: (x: string) => {success: boolean, result: string} */ =
   instantiated.instantiatedModule.exports.syncRulesToSyncStream;
 
-console.log(syncRulesToSyncStream(source));
+const { success, result } = syncRulesToSyncStream(source);
+if (success) {
+  console.log(result);
+} else {
+  console.error(result);
+}

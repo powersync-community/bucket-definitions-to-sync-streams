@@ -8,10 +8,26 @@ import 'package:sync_rules_rewriter/sync_rules_rewriter.dart';
 
 void main() {}
 
+extension type ConversionResult._(JSObject _) implements JSObject {
+  external factory ConversionResult({
+    required String result,
+    required bool success,
+  });
+}
+
 @pragma('wasm:export', 'syncRulesToSyncStream')
 WasmExternRef? convert(WasmExternRef arg) {
   final input = (arg.toJS as JSString).toDart;
+  ConversionResult result;
 
-  final emitted = syncRulesToSyncStreams(input);
-  return externRefForJSAny(emitted.toJS);
+  try {
+    result = ConversionResult(
+      result: syncRulesToSyncStreams(input),
+      success: true,
+    );
+  } catch (e) {
+    result = ConversionResult(result: e.toString(), success: false);
+  }
+
+  return externRefForJSAny(result);
 }

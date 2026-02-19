@@ -35,7 +35,6 @@ config:
   edition: 1
 '''),
       '''
-
 config:
   # preserved comment
   edition: 2

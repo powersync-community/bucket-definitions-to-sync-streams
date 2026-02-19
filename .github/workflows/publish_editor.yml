@@ -2,6 +2,7 @@ name: Build and publish editor
 
 on:
   push:
+    branches: [main]
 
 permissions:
   contents: read

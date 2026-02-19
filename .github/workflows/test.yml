@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  analyze:
+  dart:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -16,3 +16,18 @@ jobs:
       - run: dart analyze --fatal-warnings
       - run: dart test
         working-directory: sync_rules_rewriter
+
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dart-lang/setup-dart@v1
+      - run: corepack enable
+      - uses: actions/setup-node@v6
+        with:
+          node-version: latest
+      - run: dart pub get
+      - run: pnpm build
+        working-directory: js-package
+      - run: pnpm test
+        working-directory: js-package

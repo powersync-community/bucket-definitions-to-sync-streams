@@ -1,2 +1,5 @@
 .dart_tool
 website/build
+
+js-package/node_modules
+js-package/lib/compiled*

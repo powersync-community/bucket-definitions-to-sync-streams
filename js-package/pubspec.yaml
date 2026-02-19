@@ -1,0 +1,13 @@
+name: rewriter_as_js_package
+description: .
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  source_span: ^1.10.2
+  sync_rules_rewriter:
+

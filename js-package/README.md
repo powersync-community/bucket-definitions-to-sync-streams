@@ -31,3 +31,9 @@ import wasmUrl from "@powersync-community/sync-config-rewriter/compiled.wasm?url
 
 const module = await instantiate(fetch(wasmUrl));
 ```
+
+## Development
+
+To release a version of this package, update the `version` entry in
+`package.json`, merge to `main` and manually trigger the `publish_npm`
+workflow.

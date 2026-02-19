@@ -1,0 +1,27 @@
+name: Publish to npmjs.com
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for OIDC / trusted publishing
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dart-lang/setup-dart@v1
+      - run: corepack enable
+      - uses: actions/setup-node@v6
+        with:
+          node-version: latest
+      - name: Update npm
+        run: |
+          npm install -g npm@latest
+          npm --version
+      - run: dart pub get
+      - run: pnpm build
+        working-directory: js-package
+      - run: pnpm publish --no-git-checks --access public
+        working-directory: js-package

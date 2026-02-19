@@ -1,10 +1,16 @@
 import test from "node:test";
 import { readFileSync } from "node:fs";
-
-import { instantiate } from "@powersync-community/sync-config-rewriter";
+import { fileURLToPath } from "node:url";
 import assert from "node:assert";
 
-const wasmBuffer = readFileSync("lib/compiled.wasm");
+import { instantiate } from "@powersync-community/sync-config-rewriter";
+
+const wasmBuffer = readFileSync(
+  fileURLToPath(
+    import.meta
+      .resolve("@powersync-community/sync-config-rewriter/compiled.wasm"),
+  ),
+);
 
 // This implicitly asserts that the declared return type of syncRulesToSyncStreams
 // matches the actual value.

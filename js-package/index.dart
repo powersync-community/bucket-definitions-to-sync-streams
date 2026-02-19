@@ -1,5 +1,3 @@
-// Compile with dart compile wasm -E --enable-experimental-wasm-interop web/main.dart
-
 import 'dart:js_interop';
 // ignore: import_internal_library
 import 'dart:_wasm';

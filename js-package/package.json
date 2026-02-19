@@ -19,9 +19,7 @@
         "default": "./lib/index.js"
       }
     },
-    "./compiled.wasm": {
-      "default": "./lib/compiled.wasm"
-    }
+    "./compiled.wasm":  "./lib/compiled.wasm"
   },
   "keywords": ["powersync"],
   "author": "JOURNEYAPPS",

@@ -15,6 +15,9 @@ bucket_definitions:
 config:
   edition: 3
 streams:
+  # This Sync Stream has been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
   migrated_to_streams:
     auto_subscribe: true
     queries:
@@ -40,6 +43,9 @@ config:
   # preserved comment
   edition: 3
 streams:
+  # This Sync Stream has been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
   migrated_to_streams:
     auto_subscribe: true
     queries:
@@ -66,6 +72,9 @@ config:
 streams:
   b:
     query: SELECT * FROM b
+  # This Sync Stream has been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
   migrated_to_streams:
     auto_subscribe: true
     queries:
@@ -88,6 +97,9 @@ bucket_definitions:
 config:
   edition: 3
 streams:
+  # These Sync Streams have been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
   migrated_to_streams_prio_2:
     priority: 2
     auto_subscribe: true
@@ -113,6 +125,9 @@ bucket_definitions:
 config:
   edition: 3
 streams:
+  # This Sync Stream has been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
   migrated_to_streams:
     priority: 1
     auto_subscribe: true
@@ -138,14 +153,17 @@ bucket_definitions:
 config:
   edition: 3
 streams:
+  # This Sync Stream has been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
   migrated_to_streams:
     auto_subscribe: true
     with:
       user_lists_param0: SELECT id AS list_id FROM lists WHERE owner_id = auth.user_id()
       user_lists_param1: SELECT list_id FROM user_lists WHERE user_lists.user_id = auth.user_id()
     queries:
-      - "SELECT lists.* FROM lists,user_lists_param0,user_lists_param1 WHERE lists.id = user_lists_param0.list_id OR lists.id = user_lists_param1.list_id"
-      - "SELECT todos.* FROM todos,user_lists_param0,user_lists_param1 WHERE todos.list_id = user_lists_param0.list_id OR todos.list_id = user_lists_param1.list_id"
+      - "SELECT lists.* FROM lists,user_lists_param0 AS bucket0,user_lists_param1 AS bucket1 WHERE lists.id = bucket0.list_id OR lists.id = bucket1.list_id"
+      - "SELECT todos.* FROM todos,user_lists_param0 AS bucket0,user_lists_param1 AS bucket1 WHERE todos.list_id = bucket0.list_id OR todos.list_id = bucket1.list_id"
 ''',
     );
   });
@@ -166,13 +184,45 @@ bucket_definitions:
 config:
   edition: 3
 streams:
+  # This Sync Stream has been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
   migrated_to_streams:
     auto_subscribe: true
     with:
       owned_lists_param: SELECT id AS list_id FROM lists WHERE owner_id = auth.user_id()
     queries:
-      - "SELECT lists.* FROM lists,owned_lists_param WHERE lists.id = owned_lists_param.list_id"
-      - "SELECT todos.* FROM todos,owned_lists_param WHERE todos.list_id = owned_lists_param.list_id"
+      - "SELECT lists.* FROM lists,owned_lists_param AS bucket WHERE lists.id = bucket.list_id"
+      - "SELECT todos.* FROM todos,owned_lists_param AS bucket WHERE todos.list_id = bucket.list_id"
+''',
+    );
+  });
+
+  test('merges multiple bucket definitions into a single stream', () {
+    expect(
+      syncRulesToSyncStreams('''
+bucket_definitions:
+  lists:
+    data:
+      - SELECT * FROM lists
+  todos:
+    data:
+      - SELECT * FROM todos
+'''),
+      '''
+config:
+  edition: 3
+streams:
+  # This Sync Stream has been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
+  migrated_to_streams:
+    auto_subscribe: true
+    queries:
+        # Translated from "lists" bucket definition.
+      - SELECT * FROM lists
+        # Translated from "todos" bucket definition.
+      - SELECT * FROM todos
 ''',
     );
   });

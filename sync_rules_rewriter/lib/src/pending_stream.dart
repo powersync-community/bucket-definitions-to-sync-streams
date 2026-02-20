@@ -217,6 +217,7 @@ final class _ToStreamTranslator extends Transformer<void> {
                   parameterQueryCount,
                   i,
                 ),
+                as: _parameterAliasName(parameterQueryCount, i),
               ),
             ),
         ],
@@ -270,11 +271,7 @@ final class _ToStreamTranslator extends Transformer<void> {
           for (var i = 0; i < parameterQueryCount; i++)
             Reference(
               columnName: columnName,
-              entityName: parameterCteName(
-                stream.bucketDefinitionName,
-                parameterQueryCount,
-                i,
-              ),
+              entityName: _parameterAliasName(parameterQueryCount, i),
             ),
         ];
       }
@@ -289,6 +286,14 @@ String parameterCteName(String definitionName, int total, int index) {
     return '${definitionName}_param';
   } else {
     return '${definitionName}_param$index';
+  }
+}
+
+String _parameterAliasName(int total, int index) {
+  if (total == 1) {
+    return 'bucket';
+  } else {
+    return 'bucket$index';
   }
 }
 

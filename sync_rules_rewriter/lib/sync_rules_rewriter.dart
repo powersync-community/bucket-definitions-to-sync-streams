@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:source_span/source_span.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 import 'package:yaml/yaml.dart';
@@ -180,7 +182,93 @@ String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
     }
   }
 
-  return editor.toString();
+  final rendered = editor.toString();
+  return _attachCommentsToRenderedYaml(syncStreams, rendered);
+}
+
+/// The `yaml_edit` package doesn't let us add comments, so we parse the
+/// generated yaml and manually insert links to Sync Streams documentation as
+/// comments.
+String _attachCommentsToRenderedYaml(
+  SyncStreamsCollection generatedStreams,
+  String yamlWithSyncStreams,
+) {
+  final lines = const LineSplitter().convert(yamlWithSyncStreams);
+  final parsed = loadYamlNode(yamlWithSyncStreams);
+  YamlMap? streams;
+
+  if (parsed is YamlMap) {
+    final loadedStreams = parsed['streams'];
+    if (loadedStreams is YamlMap &&
+        loadedStreams.style == CollectionStyle.BLOCK) {
+      streams = loadedStreams;
+    }
+  }
+
+  if (streams == null) {
+    // Can't add comments due to some broken yaml structure.
+    return yamlWithSyncStreams;
+  }
+
+  // This simple offset commentBeforeNode is called for lines from
+  // top-to-bottom, which is the case because we iterate over streams in order.
+  var addedLines = 0;
+  void commentBeforeNode(YamlNode node, List<String> commentLines) {
+    final indent = ' ' * node.span.start.column;
+    final index = node.span.start.line + addedLines;
+
+    lines.insertAll(index, commentLines.map((line) => '$indent# $line'));
+    addedLines += commentLines.length;
+  }
+
+  for (final (i, stream) in generatedStreams.pendingStreams.values.indexed) {
+    final name = generatedStreams.nameForStream(stream);
+
+    // Link to documentation before the first stream.
+    if (i == 0) {
+      for (final key in streams.nodes.keys) {
+        if (key is YamlScalar && key.value == name) {
+          final prefix = generatedStreams.pendingStreams.length == 1
+              ? 'This Sync Stream has'
+              : 'These Sync Streams have';
+
+          commentBeforeNode(key, [
+            '$prefix been translated from bucket definitions. There may be more efficient ways to express these queries.',
+            'You can add additional queries to this list if you need them.',
+            'For details, see the documentation: https://docs.powersync.com/sync/streams/overview',
+          ]);
+          break;
+        }
+      }
+    }
+
+    if (stream.queriesByDefinition.length > 1) {
+      // We've merged multiple bucket definitions into a single sync stream. Add
+      // comments explaining which queries came from which original definition.
+      final streamInYaml = streams.nodes[name];
+      if (streamInYaml is! YamlMap) continue;
+      final queriesInYaml = streamInYaml.nodes['queries'];
+      if (queriesInYaml is! YamlList ||
+          queriesInYaml.style != CollectionStyle.BLOCK) {
+        continue;
+      }
+
+      var offset = 0;
+      for (final (originalName, queries) in stream.queriesByDefinition) {
+        if (queriesInYaml.nodes.length <= offset) {
+          break;
+        }
+        commentBeforeNode(queriesInYaml.nodes[offset], [
+          'Translated from "$originalName" bucket definition.',
+        ]);
+
+        offset += queries.length;
+      }
+    }
+  }
+
+  lines.add('');
+  return lines.join('\n');
 }
 
 final _nullSentinel = wrapAsYamlNode(null);

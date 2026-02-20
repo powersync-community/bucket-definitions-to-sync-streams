@@ -219,9 +219,9 @@ streams:
   migrated_to_streams:
     auto_subscribe: true
     queries:
-        # Translated from "lists" bucket definition.
+      # Translated from "lists" bucket definition.
       - SELECT * FROM lists
-        # Translated from "todos" bucket definition.
+      # Translated from "todos" bucket definition.
       - SELECT * FROM todos
 ''',
     );

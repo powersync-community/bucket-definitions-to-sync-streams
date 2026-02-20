@@ -210,15 +210,20 @@ String _attachCommentsToRenderedYaml(
     return yamlWithSyncStreams;
   }
 
-  // This simple offset assumes commentBeforeNode is called for lines from
+  // This simple offset assumes insertCommentAtOffset is called for lines from
   // top-to-bottom, which is the case because we iterate over streams in order.
   var addedLines = 0;
-  void commentBeforeNode(YamlNode node, List<String> commentLines) {
-    final indent = ' ' * node.span.start.column;
-    final index = node.span.start.line + addedLines;
+  void insertCommentAtOffset(int line, int column, List<String> commentLines) {
+    final indent = ' ' * column;
+    final index = line + addedLines;
 
     lines.insertAll(index, commentLines.map((line) => '$indent# $line'));
     addedLines += commentLines.length;
+  }
+
+  void commentBeforeNode(YamlNode node, List<String> commentLines) {
+    final start = node.span.start;
+    insertCommentAtOffset(start.line, start.column, commentLines);
   }
 
   for (final (i, stream) in generatedStreams.pendingStreams.values.indexed) {
@@ -258,7 +263,13 @@ String _attachCommentsToRenderedYaml(
         if (queriesInYaml.nodes.length <= offset) {
           break;
         }
-        commentBeforeNode(queriesInYaml.nodes[offset], [
+
+        final start = queriesInYaml.nodes[offset].span.start;
+        // We can't use start.column here, because that gives us the starting
+        // position of the scalar when we want the `-` of the list as a
+        // position.
+        final originalLine = lines[start.line + addedLines];
+        insertCommentAtOffset(start.line, originalLine.indexOf('-'), [
           'Translated from "$originalName" bucket definition.',
         ]);
 

@@ -6,6 +6,10 @@
     "access": "public"
   },
   "description": "Tools to rewrite Sync Configurations for PowerSync",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-community/bucket-definitions-to-sync-streams.git"
+  },
   "type": "module",
   "files": ["lib"],
   "scripts": {

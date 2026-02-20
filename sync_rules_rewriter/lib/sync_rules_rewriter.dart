@@ -210,7 +210,7 @@ String _attachCommentsToRenderedYaml(
     return yamlWithSyncStreams;
   }
 
-  // This simple offset commentBeforeNode is called for lines from
+  // This simple offset assumes commentBeforeNode is called for lines from
   // top-to-bottom, which is the case because we iterate over streams in order.
   var addedLines = 0;
   void commentBeforeNode(YamlNode node, List<String> commentLines) {

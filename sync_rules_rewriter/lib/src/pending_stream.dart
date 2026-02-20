@@ -17,7 +17,7 @@ final class TranslatedSyncStream {
   final Map<String, String> ctes = {};
 
   /// Queries added to the stream, grouped by the bucket definition from which
-  /// we've extracted them,
+  /// we've extracted them.
   final List<(String, List<String>)> queriesByDefinition = [];
 
   Iterable<String> get allQueries => queriesByDefinition.expand((e) => e.$2);

@@ -32,11 +32,12 @@ bucket_definitions:
   const output = `
 # TODO: Paste your sync rules here, they will get translated to sync streams as you type.
 config:
-  edition: 2
+  edition: 3
 streams:
-  user_lists:
+  migrated_to_streams:
     auto_subscribe: true
-    query: SELECT * FROM lists WHERE owner_id = auth.user_id()
+    queries:
+      - SELECT * FROM lists WHERE owner_id = auth.user_id()
 `;
 
   assertEqual(module.syncRulesToSyncStreams(source), {

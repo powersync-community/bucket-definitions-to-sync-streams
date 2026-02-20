@@ -54,12 +54,10 @@ String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
     return syncRules; // No buckets to translate
   }
 
-  final syncStreams = <PendingSyncStream>[];
-  var originalBucketDefinitions = 0;
+  final syncStreams = SyncStreamsCollection();
+  var hasDefinitionWithFailedTranslation = false;
 
   (buckets.value as Map).forEach((name, value) {
-    originalBucketDefinitions++;
-
     final parameters = editor.parseAt([
       'bucket_definitions',
       name,
@@ -76,7 +74,7 @@ String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
       'priority',
     ], orElse: () => _nullSentinel);
 
-    final pending = PendingSyncStream(
+    final pending = TranslationContext(
       name as String,
       diagnostics,
       switch (priority.value) {
@@ -113,10 +111,11 @@ String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
         }
       }
     } else {
+      hasDefinitionWithFailedTranslation = true;
       return;
     }
 
-    syncStreams.add(pending);
+    syncStreams.addTranslatedStream(pending);
   });
 
   if (diagnostics.isNotEmpty) {
@@ -126,50 +125,54 @@ String syncRulesToSyncStreams(String syncRules, {Uri? uri}) {
   var hasStreamsInYaml =
       editor.parseAt(['streams'], orElse: () => _nullSentinel) != _nullSentinel;
 
-  if (syncStreams.isNotEmpty) {
+  final streams = syncStreams.pendingStreams.values.toList();
+  if (streams.isNotEmpty) {
     if (editor.parseAt(['config'], orElse: () => _nullSentinel) !=
         _nullSentinel) {
-      editor.update(['config', 'edition'], 2);
+      editor.update(['config', 'edition'], 3);
     } else {
-      editor.update(['config'], wrapAsYamlNode({'edition': 2}));
+      editor.update(['config'], wrapAsYamlNode({'edition': 3}));
     }
 
-    if (originalBucketDefinitions == syncStreams.length) {
+    if (!hasDefinitionWithFailedTranslation) {
       editor.remove(['bucket_definitions']);
     }
 
-    for (final stream in syncStreams) {
-      if (originalBucketDefinitions != syncStreams.length) {
+    for (final stream in streams) {
+      if (hasDefinitionWithFailedTranslation) {
         // We can't remove bucket_definitions because we were unable to
         // translate them all. But remove mapped definitions.
-        editor.remove(['bucket_definitions', stream.name]);
+        for (final (bucketName, _) in stream.queriesByDefinition) {
+          editor.remove(['bucket_definitions', bucketName]);
+        }
       }
 
+      final dataQueries = stream.allQueries.toList();
       final streamInYaml = wrapAsYamlNode(
         collectionStyle: CollectionStyle.BLOCK,
         {
           if (stream.priority != 3) 'priority': stream.priority,
           // Bucket definitions always have a single subscription.
           'auto_subscribe': true,
-          if (stream.parameterQueries.isNotEmpty)
+          if (stream.ctes.isNotEmpty)
             'with': wrapAsYamlNode({
-              for (final (i, param) in stream.parameterQueries.indexed)
-                parameterCteName(stream.parameterQueries.length, i): param,
+              for (final MapEntry(:key, :value) in stream.ctes.entries)
+                key: value,
             }),
-          if (stream.data.length > 1)
-            'queries': wrapAsYamlNode(stream.data)
-          else
-            'query': stream.data.single,
+          // Even if the stream only has a single query, we want to write it as
+          // a list so that users can easily add more.
+          'queries': wrapAsYamlNode(dataQueries),
         },
       );
 
+      final name = syncStreams.nameForStream(stream);
       if (hasStreamsInYaml) {
-        editor.update(['streams', stream.name], streamInYaml);
+        editor.update(['streams', name], streamInYaml);
       } else {
         editor.update(
           ['streams'],
           wrapAsYamlNode(collectionStyle: CollectionStyle.BLOCK, {
-            stream.name: streamInYaml,
+            name: streamInYaml,
           }),
         );
         hasStreamsInYaml = true;

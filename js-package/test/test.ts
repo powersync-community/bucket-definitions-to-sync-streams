@@ -32,11 +32,15 @@ bucket_definitions:
   const output = `
 # TODO: Paste your sync rules here, they will get translated to sync streams as you type.
 config:
-  edition: 2
+  edition: 3
 streams:
-  user_lists:
+  # This Sync Stream has been translated from bucket definitions. There may be more efficient ways to express these queries.
+  # You can add additional queries to this list if you need them.
+  # For details, see the documentation: https://docs.powersync.com/sync/streams/overview
+  migrated_to_streams:
     auto_subscribe: true
-    query: SELECT * FROM lists WHERE owner_id = auth.user_id()
+    queries:
+      - SELECT * FROM lists WHERE owner_id = auth.user_id()
 `;
 
   assertEqual(module.syncRulesToSyncStreams(source), {

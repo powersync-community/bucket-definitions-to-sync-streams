@@ -6,8 +6,62 @@ import 'package:sqlparser/sqlparser.dart';
 import 'error.dart';
 import 'node_to_sql.dart';
 
-final class PendingSyncStream {
-  final String name;
+/// A sync stream created from a collection of `bucket_definition`s.
+///
+/// We merge all bucket definitions with the same priority into the same sync
+/// stream (using multiple data queries). This results in a Sync Config where
+/// users can just add more queries to the existing stream without having to
+/// understand all concepts of Sync Streams and the `auto_subscribe` behavior.
+final class TranslatedSyncStream {
+  final int priority;
+  final Map<String, String> ctes = {};
+
+  /// Queries added to the stream, grouped by the bucket definition from which
+  /// we've extracted them.
+  final List<(String, List<String>)> queriesByDefinition = [];
+
+  Iterable<String> get allQueries => queriesByDefinition.expand((e) => e.$2);
+
+  TranslatedSyncStream(this.priority);
+}
+
+final class SyncStreamsCollection {
+  final Map<int, TranslatedSyncStream> pendingStreams = {};
+
+  String nameForStream(TranslatedSyncStream stream) {
+    if (pendingStreams.length == 1) {
+      return 'migrated_to_streams';
+    } else {
+      return 'migrated_to_streams_prio_${stream.priority}';
+    }
+  }
+
+  void addTranslatedStream(TranslationContext context) {
+    final stream = pendingStreams.putIfAbsent(
+      context.priority,
+      () => TranslatedSyncStream(context.priority),
+    );
+
+    // Turn parameter queries into common table expressions to use them across
+    // potentially multiple data queries.
+    for (final (i, param) in context.parameterQueries.indexed) {
+      final cteName = parameterCteName(
+        context.bucketDefinitionName,
+        context.parameterQueries.length,
+        i,
+      );
+      stream.ctes[cteName] = param;
+    }
+
+    stream.queriesByDefinition.add((
+      context.bucketDefinitionName,
+      context.data,
+    ));
+  }
+}
+
+final class TranslationContext {
+  final String bucketDefinitionName;
   final List<DiagnosticMessage> messages;
   final List<String> parameterQueries = [];
   final Map<String, List<Expression>> trivialParameters = {};
@@ -15,7 +69,7 @@ final class PendingSyncStream {
 
   final List<String> data = [];
 
-  PendingSyncStream(this.name, this.messages, this.priority);
+  TranslationContext(this.bucketDefinitionName, this.messages, this.priority);
 
   /// Whether the node is a trivial parameter query (without a `FROM` clause or
   /// `WHERE` conditions).
@@ -88,7 +142,7 @@ final class PendingSyncStream {
 }
 
 final class _ToStreamTranslator extends Transformer<void> {
-  final PendingSyncStream stream;
+  final TranslationContext stream;
   String? defaultTableName;
   bool isDataQuery;
 
@@ -157,7 +211,14 @@ final class _ToStreamTranslator extends Transformer<void> {
           for (var i = 0; i < parameterQueryCount; i++)
             Join(
               operator: .comma(),
-              query: TableReference(parameterCteName(parameterQueryCount, i)),
+              query: TableReference(
+                parameterCteName(
+                  stream.bucketDefinitionName,
+                  parameterQueryCount,
+                  i,
+                ),
+                as: _parameterAliasName(parameterQueryCount, i),
+              ),
             ),
         ],
       );
@@ -210,7 +271,7 @@ final class _ToStreamTranslator extends Transformer<void> {
           for (var i = 0; i < parameterQueryCount; i++)
             Reference(
               columnName: columnName,
-              entityName: parameterCteName(parameterQueryCount, i),
+              entityName: _parameterAliasName(parameterQueryCount, i),
             ),
         ];
       }
@@ -220,7 +281,15 @@ final class _ToStreamTranslator extends Transformer<void> {
   }
 }
 
-String parameterCteName(int total, int index) {
+String parameterCteName(String definitionName, int total, int index) {
+  if (total == 1) {
+    return '${definitionName}_param';
+  } else {
+    return '${definitionName}_param$index';
+  }
+}
+
+String _parameterAliasName(int total, int index) {
   if (total == 1) {
     return 'bucket';
   } else {

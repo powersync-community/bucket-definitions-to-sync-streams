@@ -12,9 +12,10 @@ final class FixedNodeToSql extends NodeSqlBuilder {
     // Quote identifiers containing uppercase to preserve case for PostgreSQL.
     // Lowercase identifiers survive PostgreSQL case-folding without quoting.
     if (_upperCase.hasMatch(identifier)) {
-      identifier = '"$identifier"';
+      return symbol(escapeIdentifier(identifier),
+          spaceBefore: spaceBefore, spaceAfter: spaceAfter);
     }
-    symbol(identifier, spaceBefore: spaceBefore, spaceAfter: spaceAfter);
+    super.identifier(identifier, spaceBefore: spaceBefore, spaceAfter: spaceAfter);
   }
 
   @override

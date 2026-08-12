@@ -1,6 +1,8 @@
 import 'dart:js_interop';
 // ignore: import_internal_library
 import 'dart:_wasm';
+// ignore: import_internal_library
+import 'dart:_js_interop_wasm';
 
 import 'package:source_span/source_span.dart';
 import 'package:sync_config_tools/sync_rules_to_sync_streams.dart' as rewrite;
